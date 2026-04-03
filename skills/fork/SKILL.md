@@ -67,15 +67,23 @@ Do not improvise the final `/fork` behavior until the local guide exists.
 
 ### Required setup steps
 
-1. Locate the installed skill files.
-   You need at minimum:
+1. Locate the installed skill directory precisely.
+   Do not start with a broad workspace search.
+   First call:
+   - `skill_view(name="fork")`
+
+   Use the returned skill `path` to identify the actual installed skill directory for this activation.
+   Then resolve these files relative to that installed directory:
    - `scripts/fork_session.py`
    - `scripts/collect_fork_facts.py`
    - `templates/local-machine-guide.template.md`
 
+   Only if the installed path is still unclear should you use `search_files`, and then only constrained to the installed skill directory rather than the whole workspace.
+
 2. Collect local facts.
+   Run the fact collector from the installed skill directory, not from an arbitrary source checkout.
    Run:
-   - `python3 scripts/collect_fork_facts.py --json`
+   - `python3 <installed-skill-dir>/scripts/collect_fork_facts.py --json`
 
    Use the script output plus any stable relevant persistent memory about this machine.
 
@@ -94,10 +102,10 @@ Do not improvise the final `/fork` behavior until the local guide exists.
    - the intended operator UX on this machine
 
 4. Write the generated guide.
-   Create:
+   Create, inside the installed skill directory identified in step 1:
    - `references/local-machine-guide.md`
 
-   Use:
+   Use the installed copy of:
    - `templates/local-machine-guide.template.md`
 
    The generated guide must:
@@ -106,6 +114,7 @@ Do not improvise the final `/fork` behavior until the local guide exists.
    - contain absolute or fully resolved paths where practical
    - record the exact helper commands the runtime should use
    - state that it is a local-only artifact, not something to publish upstream by default
+   - never be written into an unrelated source checkout when the installed skill lives elsewhere
 
 5. Handoff to phase 2 immediately.
    After writing the guide, load it with `skill_view` and follow it for the rest of the current request.
@@ -119,6 +128,8 @@ While bootstrapping:
 - do not bypass `scripts/fork_session.py` by inventing a separate cloning mechanism
 - do not ask the user to repeat local machine facts you can inspect directly
 - do not leave setup half-finished if the environment is inspectable
+- do not choose helper paths from a broad workspace search when `skill_view(name="fork")` can identify the installed skill path
+- do not write `references/local-machine-guide.md` into a repo checkout unless that checkout is the installed skill directory for the active profile
 
 If the machine changed materially later, phase 1 may regenerate the local guide.
 Examples:
