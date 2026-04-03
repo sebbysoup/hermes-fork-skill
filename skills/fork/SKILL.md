@@ -84,7 +84,10 @@ Do not improvise the final `/fork` behavior until the local guide exists.
    Preferred path:
    - call `skill_view(name="fork")`
 
-   Use the returned skill `path` to identify the actual installed skill directory for this activation.
+   Use the returned skill `path` to identify the prompt source for this activation.
+
+   Important: if that path is a staged preload copy such as a temporary `.agents/skills/...` directory, treat it as a read-only prompt source, not the runtime install target.
+   In that case, resolve the runtime install target from the active Hermes home first and write local artifacts there.
 
    If `skill_view` is unavailable, resolve the installed directory from the active Hermes home first:
    - `<active HERMES_HOME>/skills/fork`
@@ -119,7 +122,7 @@ Do not improvise the final `/fork` behavior until the local guide exists.
    - the intended operator UX on this machine
 
 4. Write the generated guide.
-   Create, inside the installed skill directory identified in step 1:
+   Create, inside the runtime install target identified in step 1:
    - `references/local-machine-guide.md`
 
    Use the installed copy of:
@@ -148,6 +151,7 @@ While bootstrapping:
 - do not choose helper paths from a broad workspace search when `skill_view(name="fork")` or `<active HERMES_HOME>/skills/...` can identify the installed skill path
 - do not write `references/local-machine-guide.md` into a repo checkout unless that checkout is the installed skill directory for the active profile
 - do not read or write a same-named skill from another Hermes home when the current activation already has an active `HERMES_HOME`
+- do not write local-machine-guide output into a staged preload copy such as `.agents/skills/...`; staged copies are read-only prompt sources, not runtime install targets
 
 If the machine changed materially later, phase 1 may regenerate the local guide.
 Examples:

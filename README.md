@@ -36,7 +36,7 @@ On first activation, the bootstrap skill should create:
 That file is intentionally machine-specific and should stay local to the installed skill on the owner's computer.
 It is not part of the published generic skill definition.
 
-The bootstrap now prefers the active installed skill path and, if `skill_view` is unavailable, falls back only to `<active HERMES_HOME>/skills/...` lookups instead of broad workspace searches. That avoids accidentally writing the guide into a different Hermes home or repo checkout.
+The bootstrap now prefers the active installed skill path and, if `skill_view` is unavailable, falls back only to `<active HERMES_HOME>/skills/...` lookups instead of broad workspace searches. It also treats staged preload copies like `.agents/skills/...` as read-only prompt sources and still writes the generated guide into the active installed skill under `HERMES_HOME`. That avoids accidentally writing the guide into a different Hermes home, repo checkout, or temp preload copy.
 
 ## Included files
 
