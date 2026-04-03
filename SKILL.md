@@ -1,81 +1,81 @@
 ---
 name: fork
-description: Use when the user wants Codex-style /fork behavior in Hermes. This skill branches the current Hermes CLI conversation into a child session and launches it in another terminal surface without modifying Hermes core.
-version: 1.0.0
+description: Use when the user wants Codex-style /fork behavior in Hermes. Immutable bootstrap skill: first run performs local setup and writes a machine-specific usage guide; later runs load that guide and follow it.
+version: 2.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [hermes, fork, sessions, tui, terminal, branching, slash-command]
+    tags: [hermes, fork, sessions, tui, terminal, branching, slash-command, setup]
 ---
 
-FORK_SKILL_CONTROL_MARKER: __HERMES_FORK_CONTROL_MESSAGE_DO_NOT_CLONE__
+# fork bootstrap
 
-# Purpose
+This `SKILL.md` is intentionally generic and should stay immutable across machines.
+Do not rewrite this file during setup.
 
-This skill gives Hermes a Codex-like `/fork` as a pure skill.
+Instead, setup writes a machine-specific guide at:
+- `references/local-machine-guide.md`
 
-It creates a child CLI session in `state.db`, copies the source conversation history, trims this synthetic control-turn out of the copied transcript, and launches the forked session with the regular Hermes TUI by running `hermes --resume <new-session-id>` in another terminal surface.
+That generated guide becomes the authoritative operating manual for later `/fork` runs on that machine.
 
-# What this is approximating
+# Phase 1 — local setup bootstrap
 
-Interpret the user intent as:
-- "branch this exact chat where I am right now"
-- "open the branch in a separate terminal/pane/window so I can keep the original chat"
-- "reuse the normal Hermes chat bar / TUI instead of inventing a new permanent UI substrate in core"
+On every activation, first try to load:
+- `skill_view(name="fork", file_path="references/local-machine-guide.md")`
 
-So this skill does **session branching + new terminal launch**, not a deep in-place TUI rewrite.
+If that file exists and contains `SETUP_STATUS: ready`, skip to Phase 2.
 
-# Important runtime rules
+If it does not exist, do setup now before executing the user request:
 
-- Do not modify Hermes core when this skill is enough.
-- Do not hand-roll raw SQLite edits inline if the bundled script can be used.
-- Always locate and run the bundled `scripts/fork_session.py` helper.
-- Preserve the active workspace cwd by running the script from the current terminal cwd.
-- Default to `--method auto` unless the user asks for a specific launcher.
-- If no launcher is available, fall back to `--method print` and show the exact resume command.
+1. Locate the installed skill directory and helper files.
+   - Use `search_files` to find `fork_session.py` and `collect_fork_facts.py` under the installed `fork` skill.
 
-# How to run the skill
+2. Inspect this machine.
+   - Run `python3 scripts/collect_fork_facts.py --json` with `terminal`.
+   - Use your persistent memory about the owner and this machine in addition to the script output.
 
-1. Locate the installed helper script with `search_files`.
-   - Search under `~/.hermes` for `fork_session.py`
-   - Prefer the result ending in `/fork/scripts/fork_session.py`
+3. Write the generated local guide.
+   - Create `references/local-machine-guide.md` in the installed skill directory.
+   - Use `templates/local-machine-guide.template.md` as the structure.
+   - Fill in concrete values for this machine: paths, launch-method policy, profile/HERMES_HOME behavior, and exact helper commands.
+   - Include the sentinel line `SETUP_STATUS: ready` near the top.
 
-2. Run it with `terminal` using `python3`.
+4. Keep setup local.
+   - Do not mutate `SKILL.md`.
+   - Do not treat the generated guide as a publishable upstream change unless the user explicitly asks.
 
-3. Map user intent to script flags:
-   - plain `/fork` -> `--method auto`
-   - "list methods" -> `--list-methods`
-   - "dry run" / "preview" -> `--dry-run --method auto`
-   - "tmux" -> `--method tmux-window`
-   - "tmux pane" / "split" -> `--method tmux-pane`
-   - "gnome terminal" -> `--method gnome-terminal`
-   - "x-terminal-emulator" / generic Linux terminal -> `--method x-terminal-emulator`
-   - "kitty" -> `--method kitty-window`
-   - "just print the command" -> `--method print`
-   - explicit source session id/title -> `--source <value>`
-   - explicit branch title/name -> `--name <value>`
+5. After writing the guide, immediately load it with `skill_view` and follow it for the current request.
 
-4. After the script runs, report:
-   - source session id
-   - new session id
-   - resulting title
-   - chosen launch method
-   - whether a terminal was actually opened
-   - exact resume command if it printed instead of launching
+# Phase 2 — execution
 
-# Expected behavior
+If `references/local-machine-guide.md` exists, treat it as the primary machine-specific skill.
+Load it and follow it instead of re-interpreting this bootstrap.
 
-The helper script:
-- reads the current Hermes `state.db`
-- resolves the current or requested CLI session
-- clones the session into a new child session using `parent_session_id`
-- copies message history while trimming the synthetic `/fork` skill control-turn using the marker above
-- preserves the regular Hermes TUI by launching `hermes --resume <new-session-id>` in another terminal surface
+The generated guide should tell you exactly how this machine wants `/fork` to behave, but the underlying implementation should still branch the Hermes CLI session and launch:
+- `hermes --resume <new-session-id>`
 
-# Notes and pitfalls
+in a new terminal surface when possible.
 
-- The copied branch should use the normal Hermes UI, not a bespoke replacement chat bar.
-- Because Hermes skill slash commands currently queue a synthetic skill-expanded user message, the helper intentionally strips that control-turn from the forked transcript.
-- If the current Hermes process already started before this skill was installed, the user may need to restart Hermes once so `/fork` is discovered in the slash-command scan.
-- If multiple active sessions exist and the user wants a specific one, pass `--source <session-id-or-title>`.
+# Interpretation of user intent
+
+Default interpretation:
+- branch the current Hermes CLI conversation
+- keep the original chat intact
+- open the branch in another terminal/pane/window
+- preserve the normal Hermes TUI/input bar rather than inventing a separate permanent UI mode
+
+So `/fork` is primarily:
+- session branch + launcher
+
+not:
+- a core TUI rewrite
+
+# Generic execution constraints
+
+Even after setup, keep these invariants:
+- prefer the generated local guide over generic reasoning
+- preserve the active workspace cwd when launching the fork
+- use the bundled `scripts/fork_session.py` helper instead of ad-hoc SQLite edits
+- if no terminal launcher is available, fall back to printing the exact resume command
+- report the source session id, new session id, title, chosen method, and launch command when relevant

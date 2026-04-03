@@ -2,7 +2,11 @@
 
 A publishable skill-only implementation of Codex-style `/fork` for Hermes.
 
-What it does:
+This repo uses a two-phase design:
+- phase 1: an immutable bootstrap `SKILL.md` inspects the local machine and writes a local machine guide
+- phase 2: later activations load that generated local guide and follow it
+
+What `/fork` does:
 - clones the current Hermes CLI session from `state.db`
 - creates a child session with `parent_session_id`
 - strips the synthetic `/fork` control-turn from the copied transcript
@@ -15,11 +19,17 @@ What it does:
 npx skills add sebbysoup/hermes-fork-skill
 ```
 
-## Hermes note
+## Generated local guide
 
-For Hermes itself, the skill should live under the active `~/.hermes/skills/...` tree so it becomes available as `/fork` after a Hermes restart or fresh CLI launch.
+On first activation, the bootstrap skill should create:
+- `references/local-machine-guide.md`
+
+That file is intentionally machine-specific and should stay local to the installed skill on the owner's computer.
+It is not part of the published generic skill definition.
 
 ## Included files
 
 - `SKILL.md`
 - `scripts/fork_session.py`
+- `scripts/collect_fork_facts.py`
+- `templates/local-machine-guide.template.md`
