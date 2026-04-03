@@ -1,1 +1,3 @@
 skills/fork/references/local-machine-guide.md
+__pycache__/
+*.pyc

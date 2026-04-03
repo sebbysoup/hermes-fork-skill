@@ -7,8 +7,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-def default_hermes_home() -> Path:
-    env_home = os.environ.get("HERMES_HOME")
+def default_hermes_home(env: dict[str, str] | None = None) -> Path:
+    env = env or os.environ
+    env_home = env.get("HERMES_HOME")
     if env_home:
         return Path(env_home).expanduser()
     return Path.home() / ".hermes"
@@ -21,17 +22,21 @@ def hermes_binary() -> str:
     return f"{shutil.which('python3') or 'python3'} -m hermes_cli.main"
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Collect machine facts for the Hermes /fork skill setup.")
-    parser.add_argument("--json", action="store_true", help="Print JSON (default behavior).")
-    args = parser.parse_args()
-
+def collect_fork_facts(
+    *,
+    skill_dir: Path | None = None,
+    hermes_home: Path | None = None,
+    cwd: Path | None = None,
+    env: dict[str, str] | None = None,
+) -> dict:
+    env = env or os.environ
     script_path = Path(__file__).resolve()
-    skill_dir = script_path.parent.parent
-    hermes_home = default_hermes_home()
-    display = os.environ.get("DISPLAY")
-    wayland = os.environ.get("WAYLAND_DISPLAY")
-    in_tmux = bool(os.environ.get("TMUX"))
+    skill_dir = (skill_dir or script_path.parent.parent).resolve()
+    hermes_home = (hermes_home or default_hermes_home(env)).expanduser().resolve()
+    cwd = (cwd or Path.cwd()).resolve()
+    display = env.get("DISPLAY")
+    wayland = env.get("WAYLAND_DISPLAY")
+    in_tmux = bool(env.get("TMUX"))
 
     launchers = {
         "tmux_binary": shutil.which("tmux"),
@@ -42,8 +47,8 @@ def main() -> int:
         "alacritty": shutil.which("alacritty"),
     }
 
-    available_now = []
-    conditional = []
+    available_now: list[str] = []
+    conditional: list[str] = []
     if in_tmux and launchers["tmux_binary"]:
         available_now.extend(["tmux-window", "tmux-pane"])
     elif launchers["tmux_binary"]:
@@ -68,7 +73,7 @@ def main() -> int:
     else:
         recommended_now = "print"
 
-    payload = {
+    return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "skill_dir": str(skill_dir),
         "fork_helper": str(skill_dir / "scripts" / "fork_session.py"),
@@ -78,11 +83,11 @@ def main() -> int:
         "state_db_exists": (hermes_home / "state.db").exists(),
         "hermes_binary": hermes_binary(),
         "python3": shutil.which("python3") or "python3",
-        "pwd": str(Path.cwd().resolve()),
+        "pwd": str(cwd),
         "env": {
             "DISPLAY": display,
             "WAYLAND_DISPLAY": wayland,
-            "TMUX": os.environ.get("TMUX"),
+            "TMUX": env.get("TMUX"),
         },
         "launchers": launchers,
         "available_now": available_now,
@@ -94,6 +99,13 @@ def main() -> int:
         ],
     }
 
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Collect machine facts for the Hermes /fork skill setup.")
+    parser.add_argument("--json", action="store_true", help="Print JSON (default behavior).")
+    args = parser.parse_args()
+
+    payload = collect_fork_facts()
     print(json.dumps(payload, indent=2))
     return 0
 
