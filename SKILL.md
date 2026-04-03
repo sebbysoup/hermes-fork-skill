@@ -1,6 +1,6 @@
 ---
 name: fork
-description: Use when the user wants Codex-style /fork behavior in Hermes. Immutable bootstrap skill: first run performs local setup and writes a machine-specific usage guide; later runs load that guide and follow it.
+description: "Use when the user wants Codex-style /fork behavior in Hermes. Immutable bootstrap skill: first run performs local setup and writes a machine-specific usage guide; later runs load that guide and follow it."
 version: 2.0.0
 author: Hermes Agent
 license: MIT
