@@ -16,7 +16,14 @@ What `/fork` does:
 ## Install via skills.sh
 
 ```bash
-npx skills add sebbysoup/hermes-fork-skill
+npx skills add sebbysoup/hermes-fork-skill --skill fork
+```
+
+## Install via Hermes skills hub
+
+```bash
+hermes skills tap add sebbysoup/hermes-fork-skill
+hermes skills install sebbysoup/hermes-fork-skill/skills/fork -y
 ```
 
 ## Generated local guide
@@ -29,7 +36,7 @@ It is not part of the published generic skill definition.
 
 ## Included files
 
-- `SKILL.md`
-- `scripts/fork_session.py`
-- `scripts/collect_fork_facts.py`
-- `templates/local-machine-guide.template.md`
+- `skills/fork/SKILL.md`
+- `skills/fork/scripts/fork_session.py`
+- `skills/fork/scripts/collect_fork_facts.py`
+- `skills/fork/templates/local-machine-guide.template.md`
