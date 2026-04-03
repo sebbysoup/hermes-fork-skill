@@ -23,8 +23,10 @@ npx skills add sebbysoup/hermes-fork-skill --skill fork
 
 ```bash
 hermes skills tap add sebbysoup/hermes-fork-skill
-hermes skills install sebbysoup/hermes-fork-skill/skills/fork -y
+hermes skills install sebbysoup/hermes-fork-skill/skills/fork -y --force
 ```
+
+`--force` is currently needed because Hermes marks this community skill as `CAUTION` during security scanning: it intentionally inspects `HERMES_HOME`/terminal environment and launches terminal subprocesses.
 
 ## Generated local guide
 
@@ -33,6 +35,8 @@ On first activation, the bootstrap skill should create:
 
 That file is intentionally machine-specific and should stay local to the installed skill on the owner's computer.
 It is not part of the published generic skill definition.
+
+The bootstrap now prefers the active installed skill path and, if `skill_view` is unavailable, falls back only to `<active HERMES_HOME>/skills/...` lookups instead of broad workspace searches. That avoids accidentally writing the guide into a different Hermes home or repo checkout.
 
 ## Included files
 

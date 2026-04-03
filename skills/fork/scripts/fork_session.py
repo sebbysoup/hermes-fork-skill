@@ -322,7 +322,10 @@ def main() -> int:
     parser.add_argument("--list-methods", action="store_true", help="List available launcher methods and exit")
     parser.add_argument("--dry-run", action="store_true", help="Preview what would happen without creating or launching a fork")
     parser.add_argument("--json", action="store_true", help="Print JSON output")
+    parser.add_argument("--output", choices=["text", "json"], default="text", help="Output format alias for agent-friendly CLI use")
     args = parser.parse_args()
+
+    want_json = bool(args.json or args.output == "json")
 
     try:
         hermes_home = Path(args.hermes_home).expanduser() if args.hermes_home else default_hermes_home()
@@ -334,7 +337,7 @@ def main() -> int:
         default_method = choose_method("auto")
         if args.list_methods:
             payload = result_payload(available_methods=methods, default_method=default_method)
-            if args.json:
+            if want_json:
                 print(json.dumps(payload, indent=2))
             else:
                 print("Available launcher methods:")
@@ -369,7 +372,7 @@ def main() -> int:
                 hermes_home=str(hermes_home),
                 db_path=str(db_path),
             )
-            print(json.dumps(payload, indent=2) if args.json else payload)
+            print(json.dumps(payload, indent=2) if want_json else payload)
             return 0
 
         new_session_id = now_session_id()
@@ -390,7 +393,7 @@ def main() -> int:
             hermes_home=str(hermes_home),
             db_path=str(db_path),
         )
-        if args.json:
+        if want_json:
             print(json.dumps(payload, indent=2))
         else:
             print(f"Forked session {source_row['id']} -> {new_session_id}")
@@ -405,7 +408,7 @@ def main() -> int:
         return 0
     except Exception as exc:
         payload = {"status": "error", "error": str(exc)}
-        if "args" in locals() and getattr(args, "json", False):
+        if "args" in locals() and want_json:
             print(json.dumps(payload, indent=2))
         else:
             print(f"Error: {exc}", file=sys.stderr)

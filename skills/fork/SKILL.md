@@ -36,6 +36,11 @@ That generated file becomes the authoritative phase-2 runtime guide for future `
 
 ## Activation algorithm
 
+Preferred runtime condition:
+- the `skills` toolset is available, so you can use `skill_view`
+
+If the `skills` toolset is unavailable, you may still proceed, but only by anchoring all discovery to the active `HERMES_HOME` skill tree rather than the broader workspace.
+
 On every activation, do this in order:
 
 1. Try to load:
@@ -49,6 +54,13 @@ On every activation, do this in order:
 3. If the file does not exist, is unreadable, or is missing `SETUP_STATUS: ready`, run phase 1 setup now.
 
 4. After phase 1 setup completes, immediately load `references/local-machine-guide.md` with `skill_view` and follow that guide for the current user request.
+
+If `skill_view` is unavailable, determine the installed skill directory by checking, in order:
+- `<active HERMES_HOME>/skills/fork`
+- `<active HERMES_HOME>/skills/software-development/fork`
+- only then a tightly constrained search under `<active HERMES_HOME>/skills`
+
+Never start with a broad workspace search when the active Hermes home can identify the installed copy.
 
 Do not stop after setup.
 The same activation should both:
@@ -69,16 +81,21 @@ Do not improvise the final `/fork` behavior until the local guide exists.
 
 1. Locate the installed skill directory precisely.
    Do not start with a broad workspace search.
-   First call:
-   - `skill_view(name="fork")`
+   Preferred path:
+   - call `skill_view(name="fork")`
 
    Use the returned skill `path` to identify the actual installed skill directory for this activation.
-   Then resolve these files relative to that installed directory:
+
+   If `skill_view` is unavailable, resolve the installed directory from the active Hermes home first:
+   - `<active HERMES_HOME>/skills/fork`
+   - `<active HERMES_HOME>/skills/software-development/fork`
+
+   Only if those locations do not exist should you use `search_files`, and then only constrained to `<active HERMES_HOME>/skills` rather than the whole workspace.
+
+   Once found, resolve these files relative to that installed directory:
    - `scripts/fork_session.py`
    - `scripts/collect_fork_facts.py`
    - `templates/local-machine-guide.template.md`
-
-   Only if the installed path is still unclear should you use `search_files`, and then only constrained to the installed skill directory rather than the whole workspace.
 
 2. Collect local facts.
    Run the fact collector from the installed skill directory, not from an arbitrary source checkout.
@@ -128,8 +145,9 @@ While bootstrapping:
 - do not bypass `scripts/fork_session.py` by inventing a separate cloning mechanism
 - do not ask the user to repeat local machine facts you can inspect directly
 - do not leave setup half-finished if the environment is inspectable
-- do not choose helper paths from a broad workspace search when `skill_view(name="fork")` can identify the installed skill path
+- do not choose helper paths from a broad workspace search when `skill_view(name="fork")` or `<active HERMES_HOME>/skills/...` can identify the installed skill path
 - do not write `references/local-machine-guide.md` into a repo checkout unless that checkout is the installed skill directory for the active profile
+- do not read or write a same-named skill from another Hermes home when the current activation already has an active `HERMES_HOME`
 
 If the machine changed materially later, phase 1 may regenerate the local guide.
 Examples:
